@@ -3,7 +3,7 @@ This spreadsheet is designed to help you optimize your picks for the highest poi
 *How to use this spreadsheet*
 * The spreadsheet is to help you pick your starters and one sub per position (my league has a super flex so I have an extra sub for QB). 
 * Use the Decision Matrix as a dashboard to make your pick.
-  * Change the slip cell to the number of players that you think are going to be taken before your next pick.
+  * Change the slip cell to the number of players that you think are going to be taken at that position before your next pick.
   * Top player is the player with the highest projected points available to pick.
   * Lower player is best player you can get on your next pick if you are right about the slip.
   * The only cell you will have to update manually is My Squad
