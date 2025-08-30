@@ -1,0 +1,10 @@
+# Fantasy Football Draft Manager Dependencies
+
+# Excel file handling and data manipulation
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# Note: The following are built-in Python modules and don't need to be installed:
+# - os
+# - sys
+# - typing
