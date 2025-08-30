@@ -5,8 +5,12 @@ import openpyxl
 import os
 import sys
 from typing import Optional
+import shutil
 
 class FantasyDraftManager:
+    sheet_map = {'QB': 'QBs', 'RB': 'RBs', 'WR': 'WRs', 'K': 'Ks', 'D': 'Ds', 'TE': 'TEs'}
+    positions = ['QB', 'RB', 'WR', 'K', 'D', 'TE']
+
     def __init__(self, spreadsheet_path: str):
         self.spreadsheet_path = spreadsheet_path
         self.sheets_data = {}
@@ -40,7 +44,6 @@ class FantasyDraftManager:
         
         if os.path.exists(backup_path):
             try:
-                import shutil
                 shutil.copy2(backup_path, self.spreadsheet_path)
                 print(f"✅ Restored from backup: {os.path.basename(backup_path)} → {os.path.basename(self.spreadsheet_path)}")
             except Exception as e:
@@ -55,12 +58,12 @@ class FantasyDraftManager:
             return
         
         df = self.sheets_data[sheet_name]
-        print(f"\n=== {sheet_name.upper()} ===")
-        print(f"Total players: {len(df)}")
-        
+        print(f"\n=== {sheet_name.upper()} ===")        
         if len(df) == 0:
             print("No players remaining in this sheet!")
             return
+        
+        print(f"Total players: {len(df)}")
         
         # Show column names
         print("\nColumns:", ", ".join([str(col) for col in df.columns.tolist()]))
@@ -166,21 +169,30 @@ class FantasyDraftManager:
             return
         
         print("\n=== UPDATE SLIP VALUES ===")
-        print("Enter new slip values for each position (or press Enter to skip):")
+        print("Current slip values and available players:")
         
-        positions = ['QB', 'RB', 'WR', 'K', 'D', 'TE']
         slip_updates = {}
         
-        for pos in positions:
+        for pos in self.positions:
+            # Get current slip value
+            current_slip = self._get_slip_value(pos)
+            current_slip_str = str(current_slip) if current_slip is not None else "N/A"
+            
+            # Get remaining players count
+            sheet_name = self.sheet_map[pos]
+            remaining_players = len(self.sheets_data[sheet_name]) if sheet_name in self.sheets_data else 0
+            
+            print(f"\n{pos}: Current slip = {current_slip_str}, Players remaining = {remaining_players}")
+            
             try:
-                current_slip = input(f"{pos} slip value: ").strip()
-                if current_slip:
-                    slip_updates[pos] = int(current_slip)
+                new_slip = input(f"Enter new {pos} slip value (or press Enter to skip): ").strip()
+                if new_slip:
+                    slip_updates[pos] = int(new_slip)
             except ValueError:
                 print(f"Invalid value for {pos}, skipping...")
         
         if not slip_updates:
-            print("No updates to make.")
+            print("\nNo updates to make.")
             return
         
         # Track the updates for saving
@@ -188,7 +200,7 @@ class FantasyDraftManager:
             self.slip_updates = {}
         self.slip_updates.update(slip_updates)
         
-        print(f"Slip values updated: {slip_updates}")
+        print(f"\nSlip values updated: {slip_updates}")
         return slip_updates
     
     def save_spreadsheet(self):
@@ -309,7 +321,6 @@ class FantasyDraftManager:
             workbook = openpyxl.load_workbook(self.spreadsheet_path, data_only=True)
             dm_sheet = workbook['Decision Matrix']
             
-            positions = ['QB', 'RB', 'WR', 'K', 'D', 'TE']
             pos_to_col = {1: 'QB', 2: 'RB', 3: 'WR', 4: 'K', 5: 'D', 6: 'TE'}
             
             data = {
@@ -340,8 +351,6 @@ class FantasyDraftManager:
     
     def _compute_decision_matrix_values(self):
         """Compute Top Player, Lower Player, and Diff values using Python logic"""
-        positions = ['QB', 'RB', 'WR', 'K', 'D', 'TE']
-        sheet_map = {'QB': 'QBs', 'RB': 'RBs', 'WR': 'WRs', 'K': 'Ks', 'D': 'Ds', 'TE': 'TEs'}
         
         computed_data = {
             'top_player': {},
@@ -349,8 +358,8 @@ class FantasyDraftManager:
             'diff': {}
         }
         
-        for pos in positions:
-            sheet_name = sheet_map[pos]
+        for pos in self.positions:
+            sheet_name = self.sheet_map[pos]
             if sheet_name in self.sheets_data:
                 df = self.sheets_data[sheet_name]
                 
@@ -428,15 +437,13 @@ class FantasyDraftManager:
         print("\n=== DRAFT SUMMARY ===")
         
         # Display Decision Matrix data
-        if 'Decision Matrix' in self.sheets_data:
-            positions = ['QB', 'RB', 'WR', 'K', 'D', 'TE']
-            
+        if 'Decision Matrix' in self.sheets_data:            
             # First try to get calculated values from Excel formulas
             calculated_data = self._get_calculated_decision_matrix_data()
             
             # If that fails or returns N/A values, compute them with Python
             computed_data = None
-            if not calculated_data or all(calculated_data['top_player'].get(pos) in [None, 'N/A'] for pos in positions):
+            if not calculated_data or all(calculated_data['top_player'].get(pos) in [None, 'N/A'] for pos in self.positions):
                 computed_data = self._compute_decision_matrix_values()
             
             # Get basic data (My squad, slip) from pandas
@@ -460,7 +467,7 @@ class FantasyDraftManager:
             print("\n🏈 YOUR DRAFT STATUS:")
             
             # Display the data in a nice format
-            for pos in positions:
+            for pos in self.positions:
                 print(f"\n{pos}:")
                 print(f"  Drafted: {my_squad_data.get(pos, '0/0')}")
                 
