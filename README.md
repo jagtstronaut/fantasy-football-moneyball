@@ -5,4 +5,4 @@ Some notes:
 1. In a mockdraft, this only outperforms a greedy algorithm by a couple of projected points so take this for what it is.
 2. This is optimized for snakedraft and numbers in the spreadsheet are for the 2025 NFL season.
 3. I have never won a fantasy football league and participated in very few.
-4. Excel is V1. Script is python script V2 WIP. 
+4. Excel is V1 and entirely excel driven. Script is V2 and a python script that manages the excel sheet for you.
